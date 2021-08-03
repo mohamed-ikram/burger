@@ -10,6 +10,7 @@ import Spinner from "../../components/UI/Spinner/Spinner";
 import withErrorHandler from "../../hoc/withErrorHandler/withErrorHandler";
 import * as burgerBuilderActions from "../../store/actions/index";
 import axios from "../../axios-orders";
+import Axios from "axios";
 
 class BurgerBuilder extends Component {
   // constructor(props) {
@@ -17,16 +18,31 @@ class BurgerBuilder extends Component {
   //     this.state = {...}
   // }
   state = {
-    purchasing: false
+    purchasing: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.props.onInitIngredients();
+    Axios.get(
+      "https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg",
+      {
+        onDownloadProgress: (progressEvent) => {
+          console.log("progressEvent", progressEvent);
+
+          const percentage = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          console.log("percentage", percentage);
+        },
+      }
+    )
+      .then((res) => console.log(res))
+      .catch((err) => console.log(err));
   }
 
   updatePurchaseState(ingredients) {
     const sum = Object.keys(ingredients)
-      .map(igKey => {
+      .map((igKey) => {
         return ingredients[igKey];
       })
       .reduce((sum, el) => {
@@ -36,13 +52,13 @@ class BurgerBuilder extends Component {
   }
 
   purchaseHandler = () => {
-    if(this.props.isAuthenicated){
-    this.setState({ purchasing: true });
-  }else{
-    this.props.onSetRedirect("/checkout")
-    this.props.history.push("/auth")
-  }
-};
+    if (this.props.isAuthenicated) {
+      this.setState({ purchasing: true });
+    } else {
+      this.props.onSetRedirect("/checkout");
+      this.props.history.push("/auth");
+    }
+  };
 
   purchaseCancelHandler = () => {
     this.setState({ purchasing: false });
@@ -55,7 +71,7 @@ class BurgerBuilder extends Component {
 
   render() {
     const disabledInfo = {
-      ...this.props.ings
+      ...this.props.ings,
     };
     for (let key in disabledInfo) {
       disabledInfo[key] = disabledInfo[key] <= 0;
@@ -106,24 +122,25 @@ class BurgerBuilder extends Component {
   }
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   return {
     ings: state.burgerBuilder.ingredients,
     price: state.burgerBuilder.totalPrice,
     error: state.burgerBuilder.error,
-    isAuthenicated:state.auth.token !=null
+    isAuthenicated: state.auth.token != null,
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    onIngredientAdded: ingName =>
+    onIngredientAdded: (ingName) =>
       dispatch(burgerBuilderActions.addIngredient(ingName)),
-    onIngredientRemoved: ingName =>
+    onIngredientRemoved: (ingName) =>
       dispatch(burgerBuilderActions.removeIngredient(ingName)),
     onInitIngredients: () => dispatch(burgerBuilderActions.initIngredients()),
     onInitPurchase: () => dispatch(burgerBuilderActions.purchaseInit()),
-    onSetRedirect:(path)=> dispatch(burgerBuilderActions.setAuthRedirect(path))
+    onSetRedirect: (path) =>
+      dispatch(burgerBuilderActions.setAuthRedirect(path)),
   };
 };
 
